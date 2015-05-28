@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:int="http://www.springframework.org/schema/integration"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:file="http://www.springframework.org/schema/integration/file"
+	   xsi:schemaLocation="http://www.springframework.org/schema/integration
+						   http://www.springframework.org/schema/integration/spring-integration.xsd
+						   http://www.springframework.org/schema/beans
+						   http://www.springframework.org/schema/beans/spring-beans.xsd
+						   http://www.springframework.org/schema/context
+						   http://www.springframework.org/schema/context/spring-context.xsd
+						   http://www.springframework.org/schema/integration/file
+						   http://www.springframework.org/schema/integration/file/spring-integration-file.xsd">
+
+	<context:component-scan base-package="com.workfront.bc"/>
+
+	<context:annotation-config/>
+
+	<int:annotation-config/>
+
+	<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location" value="classpath:configs.properties"/>
+	</bean>
+
+	<int:logging-channel-adapter id="errorLogger"
+								 logger-name="General"
+								 log-full-message="true"
+								 level="INFO"/>
+
+	<int:logging-channel-adapter id="trackerLogger"
+								 logger-name="Tracker"
+								 log-full-message="true"
+								 level="INFO"/>
+
+	<int:channel id="inputChannel"/>
+
+	<int:channel id="outputChannel"/>
+
+	<int:channel id="loggerChannel"/>
+
+	<int:channel id="logThenDiscardChannel"/>
+
+	<int:channel id="discardChannel">
+		<int:interceptors>
+			<!-- log the data incoming to the discard channel -->
+			<int:wire-tap channel="trackerLogger"/>
+		</int:interceptors>
+	</int:channel>
+
+	<!-- adding header 'discarded = true' to discarded messages -->
+	<int:header-enricher input-channel="logThenDiscardChannel" output-channel="discardChannel">
+		<int:header name="discarded" value="true"/>
+	</int:header-enricher>
+
+	<int:channel id="emptyFileChannel"/>
+
+	<!-- adding header 'file-empty = true' to messages which payload is empty -->
+	<int:header-enricher input-channel="emptyFileChannel" output-channel="trackerLogger">
+		<int:header name="file-empty" value="true"/>
+	</int:header-enricher>
+
+	<!-- file inbound adapter for incoming files -->
+	<file:inbound-channel-adapter channel="inputChannel"
+								  directory = "${input.folder.path}"
+								  auto-create-directory="true">
+		<int:poller id="poller"
+					fixed-delay="5000"
+					error-channel="errorLogger"/>
+	</file:inbound-channel-adapter>
+
+	<!-- chain actions (may include filters, enrcihers, transformers) -->
+	<int:chain input-channel="inputChannel" output-channel="outputChannel">
+
+		<int:filter ref="emptyFileFilter" discard-channel="emptyFileChannel"/>
+
+		<int:filter ref="acceptFileFilter" discard-channel="logThenDiscardChannel"/>
+
+	</int:chain>
+
+	<!-- file outbound gateway for outcoming files  -->
+	<file:outbound-gateway request-channel="outputChannel"
+						   reply-channel="loggerChannel"
+						   directory="${output.folder.path}"
+						   auto-create-directory="true"
+						   delete-source-files="true"/>
+
+	<!-- file outbound adapter for discarded files-->
+	<file:outbound-channel-adapter
+		directory="${discard.folder.path}"
+		channel="discardChannel"
+		auto-create-directory="true"
+		delete-source-files="true"/>
+
+</beans>

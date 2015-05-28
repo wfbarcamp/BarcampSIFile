@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" [<!ENTITY logpath "/Users/arthurhovhannisyan/Projects/WorkFront/BarCampSIFile/temp/logs">]>
+
+<log4j:configuration>
+
+	<appender name="GeneralAppender" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="&logpath;/error/general.log"/>
+		<param name="DatePattern"    value="'.'yyyy-MM-dd"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %-5p %c (%M:%L) [%t] - %m%n%n"/>
+		</layout>
+	</appender>
+
+	<appender name="TrackerAppender" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="&logpath;/tracker/tracker.log"/>
+		<param name="DatePattern"    value="'.'yyyy-MM-dd"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %-5p %c (%M:%L) [%t] - %m%n%n"/>
+		</layout>
+	</appender>
+
+    <logger name="Tracker" additivity="false">
+        <level value="info"/>
+        <appender-ref ref="TrackerAppender"/>
+    </logger>
+
+    <logger name="General" additivity="false">
+        <level value="info"/>
+        <appender-ref ref="GeneralAppender"/>
+    </logger>
+
+	<root>
+		<level value ="ERROR"/>
+		<appender-ref ref="GeneralAppender"/>
+	</root>
+	
+</log4j:configuration>
