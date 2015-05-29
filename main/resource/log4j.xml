@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" [<!ENTITY logpath "/Users/arthurhovhannisyan/Projects/WorkFront/BarCampSIFile/temp/logs">]>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" [<!ENTITY logpath "./temp/logs">]>
 
 <log4j:configuration>
+
+	<appender name="ConsoleAppender" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{ABSOLUTE} %5p %c{1}:%L - %m%n"/>
+		</layout>
+	</appender>
 
 	<appender name="GeneralAppender" class="org.apache.log4j.DailyRollingFileAppender">
 		<param name="File" value="&logpath;/error/general.log"/>
@@ -30,7 +36,8 @@
     </logger>
 
 	<root>
-		<level value ="ERROR"/>
+		<level value ="INFO"/>
+		<appender-ref ref="ConsoleAppender"/>
 		<appender-ref ref="GeneralAppender"/>
 	</root>
 	
